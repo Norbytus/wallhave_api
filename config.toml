@@ -1,0 +1,4 @@
+token = "<API_KEY>"
+[wallhaven_search_config]
+sorting = "toplist"
+resolutions = "1920x1080"

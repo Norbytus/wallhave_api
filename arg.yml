@@ -1,0 +1,12 @@
+name: wallhave_api
+version: "1.0"
+author: Alex S. <norbyt93@gmail.com>
+about: Text
+args:
+    - config:
+        short: c
+        long: config
+        value_name: FILE
+        help: Sets a custom config file
+        takes_value: true
+        required: true

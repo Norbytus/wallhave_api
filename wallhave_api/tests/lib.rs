@@ -10,11 +10,7 @@ fn t() {
         order: "asc".to_string(),
         sorting: "date_added".to_string(),
         purity: "nsfw".to_string(),
-        categories: "".to_string(),
+        categories: "latest".to_string(),
     };
-
-}
-
-async fn test_result(conf: &Search, client: &Client) {
-    assert_eq!(None, search(&conf, &client).await);
+    assert_eq!(true, search(&conf, &client).is_ok());
 }

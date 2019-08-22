@@ -1,6 +1,6 @@
 #![feature(async_await)]
 use std::convert::Into;
-use std::marker::PhantomData;
+use std::error::Error;
 use serde_derive::{Deserialize, Serialize};
 
 const BASE_URL: &'static str = "https://wallhaven.cc/api/v1/";
@@ -29,9 +29,7 @@ pub struct Data {
 }
 
 #[derive(Deserialize, Serialize, PartialEq, Debug)]
-pub struct Color {
-    hex: String,
-}
+pub struct Color (String);
 
 #[derive(Deserialize, Serialize, PartialEq, Debug)]
 pub struct Thumbs {
@@ -53,7 +51,7 @@ pub struct ImageInfo {
     dimension_x: u64,
     dimension_y: u64,
     resolution: String,
-    ratio: f64,
+    ratio: String,
     file_size: u64,
     file_type: String,
     created_at: String,
@@ -64,11 +62,11 @@ pub struct ImageInfo {
 
 #[derive(Deserialize, Serialize, PartialEq, Debug)]
 pub struct Meta {
-    current_path: u32,
+    current_page: u32,
     last_page: u32,
-    per_page: u32,
+    per_page: String,
     total: u32,
-    seed: String,
+    seed: Option<String>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -94,16 +92,16 @@ impl Search {
     }
 }
 
-pub async fn search(search_param: &Search, client: &Client) -> Option<Data> {
+pub fn search(search_param: &Search, client: &Client) -> Result<Data, Box<dyn Error>> {
     let url = format!("{}search?apikey={}&{}", BASE_URL, client.token, search_param.to_query());
-    match surf::get(&url).recv_string().await {
-        Ok(response) => {
-            let data = serde_json::from_str::<Data>(&response);
-            match data {
-                Ok(d) => Some(d),
-                Err(_) => None,
-            }
+    let result = reqwest::get(&url)?.text()?;
+
+    match serde_json::from_str::<Data>(&result) {
+        Ok(result) => {
+            Ok(result)
         },
-        Err(_) => None
+        Err(e) => {
+            Err(Box::new(e))
+        }
     }
 }

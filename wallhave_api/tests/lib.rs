@@ -2,8 +2,8 @@
 use wallhave_api::{Client, Search, search};
 
 #[test]
-fn t() {
-    let client = Client::new("<API_KEY>");
+fn search_image() {
+    let client = Client::new("79KUyEWUcZRB3mgYNzpP4ZCn8GpUfwti");
     let conf = Search {
         ratio: "16x10".to_string(),
         resolutions: "1920x1080".to_string(),

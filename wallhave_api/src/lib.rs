@@ -1,6 +1,7 @@
 #![feature(async_await)]
 use std::convert::Into;
 use std::error::Error;
+use std::collections::HashSet;
 use serde_derive::{Deserialize, Serialize};
 
 const BASE_URL: &'static str = "https://wallhaven.cc/api/v1/";
@@ -77,6 +78,34 @@ pub struct Search {
     pub sorting: String,
     pub purity: String,
     pub categories: String,
+}
+
+struct QuerySearch {
+    incluide_tags: Tags,
+}
+
+struct Tags(HashSet<String>);
+
+impl Tags {
+    fn new() -> Self {
+        Self (HashSet::new())
+    }
+
+    fn add_tag<T: Into::<String>>(&mut self, tag: T) {
+        self.0.insert(tag.into());
+    }
+
+    fn remove_tag<T: Into::<String>>(&mut self, tag: T) {
+        self.0.remove(&tag.into());
+    }
+}
+
+impl QuerySearch {
+    fn new() -> Self {
+        Self {
+            incluide_tags: Tags::new(),
+        }
+    }
 }
 
 impl Search {

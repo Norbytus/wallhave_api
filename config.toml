@@ -1,4 +1,5 @@
-token = "<API_KEY>"
 [wallhaven_search_config]
+token = "79KUyEWUcZRB3mgYNzpP4ZCn8GpUfwti"
 sorting = "toplist"
-resolutions = "1920x1080"
+resolution = "1920x1080"
+categoriest = "girls"

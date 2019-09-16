@@ -1,97 +1,68 @@
-#[macro_use]
-extern crate clap;
-
-use clap::App;
+use clap::{App, load_yaml};
 use serde_derive::{Deserialize, Serialize};
 
 use std::error::Error;
-use std::fs::OpenOptions;
+use std::fs::File;
 use std::io::Read;
+use toml::de::from_str;
+use std::path::{Path, PathBuf};
+use std::env::home_dir;
+use std::fs::DirBuilder;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let yml = load_yaml!("../arg.yml");
     let matchs = App::from_yaml(yml).get_matches();
 
     let config = Config::from_file(matchs.value_of("config").unwrap_or(""))?;
-
-    let wallhaven = WallHavenApi::init_from_config(&config);
-
-    let search = WallHaveSearch(wallhaven);
+    init_conf_dir(&config);
 
     Ok(())
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 struct Config {
-    token: String,
-    wallhaven_search_config: WallHavenSearchConfig,
-}
-
-trait GetToken {
-    fn get_token(&self) -> &str;
+    wallhaven_search_config: WallHavenConf,
 }
 
 impl Config {
-    fn from_file(path: &str) -> Result<Self, Box<dyn Error>> {
-        let mut file = OpenOptions::new().read(true).write(false).open(path)?;
-        let mut buffer: String = String::new();
+    fn from_file(file_path: &str) -> Result<Self, Box<dyn Error>> {
+        let mut file = File::open(file_path)?;
+        let mut buffer = String::new();
         file.read_to_string(&mut buffer)?;
 
-        match toml::from_str(&buffer) {
-            Ok(config) => Ok(config),
+        match from_str(&buffer) {
+            Ok(success) => Ok(success),
             Err(e) => Err(Box::new(e)),
         }
     }
 
-    fn get_token(&self) -> &str {
-        &self.token
+    fn get_folders_name(&self) -> Vec<String> {
+        vec![String::from("wallhaven")]
     }
 }
-
-impl GetToken for Config {
-    fn get_token(&self) -> &str {
-        &self.token
-    }
-}
-
-#[derive(Debug)]
-struct WallHavenApi {
-    token: String,
-}
-
-impl WallHavenApi {
-    fn get_base_url() -> &'static str {
-        "https://wallhaven.cc/api/v1/"
-    }
-
-    fn init_from_config<T: GetToken>(config: &T) -> Self {
-        Self {
-            token: config.get_token().into()
-        }
-    }
-}
-
-#[derive(Debug)]
-struct WallHaveSearch(WallHavenApi);
-
-#[derive(Deserialize, Debug)]
-struct WallHavenSearchConfig {
-    sorting: String,
-    resolutions: String,
-}
-
-impl WallHaveSearch {
-    fn get_end_point() -> &'static str {
-        "search?"
-    }
-
-    fn prepare_url(search_config: &WallHavenSearchConfig) {
-    }
-}
-
-type SearchResultList = Vec<SearchResult>;
 
 #[derive(Deserialize, Serialize, Debug)]
-struct SearchResult {
-    path: String,
+struct WallHavenConf {
+    token: String,
+    resolution: String,
+    sorting: String,
+    categoriest: String,
+}
+
+fn init_conf_dir(config: &Config) -> Result<(), Box<dyn Error>> {
+    let mut home_dir_path: PathBuf = home_dir().expect("Can't find home directory");
+
+    home_dir_path.push(".config/wallhaven");
+
+    if !home_dir_path.exists() {
+        DirBuilder::new().recursive(true).create(&home_dir_path)?;
+    }
+
+    for file_folder_name in config.get_folders_name() {
+        let mut temp = home_dir_path.clone();
+        temp.push(file_folder_name);
+        DirBuilder::new().recursive(true).create(&temp)?;
+    }
+
+    Ok(())
 }
